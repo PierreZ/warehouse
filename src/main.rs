@@ -39,7 +39,7 @@ fn main() {
 
     match matches.cmd {
         Cmd::Scan { ips } => {
-            crate::scan(ips);
+            println!("{:?}", crate::scan(ips));
         }
         Cmd::Inventory { inventory: _ } => unimplemented!("getting info from Ansible Inventory"),
     }
