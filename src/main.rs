@@ -1,0 +1,46 @@
+use env_logger::{Builder, Env};
+use std::path::PathBuf;
+use structopt::StructOpt;
+use warehouse::scan;
+
+#[derive(StructOpt, PartialEq, Debug, Clone)]
+/// handle package inventory on remote servers
+struct Opt {
+    #[structopt(short = "d", long = "debug", help = "Activate debug mode")]
+    debug: bool,
+
+    #[structopt(short = "v", long = "verbose", help = "Activate verbose mode")]
+    verbose: bool,
+    #[structopt(subcommand)]
+    cmd: Cmd,
+}
+
+#[derive(StructOpt, PartialEq, Debug, Clone)]
+enum Cmd {
+    #[structopt(name = "scan")]
+    /// scan a list of ips
+    Scan {
+        /// List of IPs to scan
+        #[structopt(raw(required = "true", min_values = "1"))]
+        ips: Vec<String>,
+    },
+    #[structopt(name = "inventory")]
+    /// provide an Ansible inventory to scan
+    Inventory {
+        /// Output file
+        #[structopt(name = "FILE", parse(from_os_str))]
+        inventory: PathBuf,
+    },
+}
+
+fn main() {
+    Builder::from_env(Env::default().default_filter_or("info")).init();
+    let matches = Opt::from_args();
+
+    match matches.cmd {
+        Cmd::Scan { ips } => {
+            crate::scan(ips);
+        }
+        Cmd::Inventory { inventory: _ } => unimplemented!("getting info from Ansible Inventory"),
+    }
+}
