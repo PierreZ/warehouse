@@ -1,6 +1,8 @@
 use env_logger::{Builder, Env};
+use log::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use warehouse;
 use warehouse::scan;
 
 #[derive(StructOpt, PartialEq, Debug, Clone)]
@@ -11,6 +13,11 @@ struct Opt {
 
     #[structopt(short = "v", long = "verbose", help = "Activate verbose mode")]
     verbose: bool,
+
+    /// config file
+    #[structopt(short = "c", long = "config")]
+    config: String,
+
     #[structopt(subcommand)]
     cmd: Cmd,
 }
@@ -18,6 +25,7 @@ struct Opt {
 #[derive(StructOpt, PartialEq, Debug, Clone)]
 enum Cmd {
     #[structopt(name = "scan")]
+
     /// scan a list of ips
     Scan {
         /// List of IPs to scan
@@ -35,11 +43,17 @@ enum Cmd {
 
 fn main() {
     Builder::from_env(Env::default().default_filter_or("info")).init();
-    let matches = Opt::from_args();
+    let args = Opt::from_args();
 
-    match matches.cmd {
+    let settings = match warehouse::configuration::Settings::from(args.config) {
+        Ok(config) => config,
+        Err(error) => panic!("There was a problem opening the config file: {:?}", error),
+    };
+    debug!("Starting warehouse with {:?}", settings);
+
+    match args.cmd {
         Cmd::Scan { ips } => {
-            println!("{:?}", crate::scan(ips));
+            println!("{:?}", crate::scan(ips, settings.ssh.clone()));
         }
         Cmd::Inventory { inventory: _ } => unimplemented!("getting info from Ansible Inventory"),
     }

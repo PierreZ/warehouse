@@ -1,0 +1,6 @@
+[ssh]
+key_path = "/home/pierrez/.ssh/id_ed25519"
+user = "debian"
+package_manager = "dpkg"
+
+[elasticsearch]
