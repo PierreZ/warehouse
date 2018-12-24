@@ -3,6 +3,7 @@ use log::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use warehouse;
+use warehouse::push;
 use warehouse::scan;
 
 #[derive(StructOpt, PartialEq, Debug, Clone)]
@@ -54,7 +55,18 @@ fn main() {
     match args.cmd {
         Cmd::Scan { ips } => {
             for ip in ips {
-                println!("{:?}", crate::scan(ip, settings.ssh.clone()));
+                let packages = match crate::scan(ip.clone(), settings.ssh.clone()) {
+                    Ok(p) => p,
+                    Err(e) => panic!("There was a problem opening the config file: {:?}", e),
+                };
+                println!(
+                    "{:?}",
+                    crate::push::push_scan_results(
+                        ip.clone(),
+                        packages,
+                        settings.elasticsearch.clone()
+                    )
+                );
             }
         }
         Cmd::Inventory { inventory: _ } => unimplemented!("getting info from Ansible Inventory"),
