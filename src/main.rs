@@ -53,7 +53,9 @@ fn main() {
 
     match args.cmd {
         Cmd::Scan { ips } => {
-            println!("{:?}", crate::scan(ips, settings.ssh.clone()));
+            for ip in ips {
+                println!("{:?}", crate::scan(ip, settings.ssh.clone()));
+            }
         }
         Cmd::Inventory { inventory: _ } => unimplemented!("getting info from Ansible Inventory"),
     }
