@@ -5,6 +5,10 @@ use env_logger;
 use futures::Future;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate failure_derive;
+#[macro_use]
+extern crate serde_derive;
 use log::{debug, info};
 use std::collections::HashMap;
 use std::error::Error;
@@ -20,8 +24,6 @@ lazy_static! {
         m
     };
 }
-
-extern crate serde_derive;
 
 pub fn scan(
     ip: String,

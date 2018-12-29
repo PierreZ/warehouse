@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, File};
+use log::debug;
 use serde;
 use serde_derive::{Deserialize, Serialize};
 
@@ -17,7 +18,10 @@ pub struct SSHConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ESConfig {}
+pub struct ESConfig {
+    pub url: String,
+    pub index: String,
+}
 
 impl Settings {
     pub fn from(path: String) -> Result<Self, ConfigError> {

@@ -4,3 +4,5 @@ user = "debian"
 package_manager = "dpkg"
 
 [elasticsearch]
+url = "http://localhost:9200"
+index = "warehouse2q"
