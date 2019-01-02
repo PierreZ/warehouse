@@ -38,10 +38,8 @@ pub fn push_scan_results(
 
     let data = Data { packages: vec };
 
-    let toto = serde_json::to_string(&data.clone())?;
-
     let url = format!("{}/{}/packages/{}", settings.url, settings.index, hostname).to_owned();
-    let res = client.put(&url).json(&data).send()?;
+    let res = client.post(&url).json(&data).send()?;
 
     info!("pushing to {} is {}", url, res.status());
     Ok(res.status())
@@ -76,7 +74,11 @@ pub fn init_mapping(
 }"#;
 
     let url = format!("{}/{}", settings.url, settings.index).to_owned();
-    let res = client.put(&url).json(mapping).send()?;
+    let res = client
+        .put(&url)
+        .header("Content-Type", "application/json")
+        .body(mapping)
+        .send()?;
     info!("pushing to {} is {}", url, res.status());
     info!("{:?}", res);
     Ok(res.status())
