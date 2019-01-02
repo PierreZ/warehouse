@@ -3,8 +3,6 @@ use log::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use warehouse;
-use warehouse::push;
-use warehouse::scan;
 
 #[derive(StructOpt, PartialEq, Debug, Clone)]
 /// handle package inventory on remote servers
@@ -26,7 +24,6 @@ struct Opt {
 #[derive(StructOpt, PartialEq, Debug, Clone)]
 enum Cmd {
     #[structopt(name = "scan")]
-
     /// scan a list of ips
     Scan {
         /// List of IPs to scan
@@ -40,6 +37,9 @@ enum Cmd {
         #[structopt(name = "FILE", parse(from_os_str))]
         inventory: PathBuf,
     },
+    #[structopt(name = "init")]
+    /// init ES mapping
+    Init {},
 }
 
 fn main() {
@@ -53,15 +53,21 @@ fn main() {
     debug!("Starting warehouse with {:?}", settings);
 
     match args.cmd {
+        Cmd::Init {} => {
+            println!(
+                "{:?}",
+                warehouse::elasticsearch::init_mapping(settings.elasticsearch.to_owned())
+            );
+        }
         Cmd::Scan { ips } => {
             for ip in ips {
-                let packages = match crate::scan(ip.clone(), settings.ssh.clone()) {
+                let packages = match warehouse::scan::scan(ip.clone(), settings.ssh.clone()) {
                     Ok(p) => p,
                     Err(e) => panic!("There was a problem opening the config file: {:?}", e),
                 };
                 println!(
                     "{:?}",
-                    crate::push::push_scan_results(
+                    warehouse::elasticsearch::push_scan_results(
                         ip.clone(),
                         packages,
                         settings.elasticsearch.clone()

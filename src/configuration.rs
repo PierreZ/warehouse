@@ -1,5 +1,4 @@
 use config::{Config, ConfigError, File};
-use log::debug;
 use serde;
 use serde_derive::{Deserialize, Serialize};
 

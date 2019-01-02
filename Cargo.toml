@@ -4,9 +4,6 @@ version = "0.1.0"
 authors = ["Pierre Zemb <contact@pierrezemb.fr>"]
 edition = "2018"
 
-[lib]
-name = "warehouse"
-
 [dependencies]
 structopt = "0.2"
 config = "0.9"

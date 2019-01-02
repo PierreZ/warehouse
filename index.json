@@ -1,0 +1,22 @@
+{
+    "settings": {
+        "number_of_replicas": 1
+    },
+    "mappings": {
+        "packages": {
+            "properties": {
+                "packages": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "text"
+                        },
+                        "text": {
+                            "type": "text"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
