@@ -12,12 +12,13 @@ GET /_search
             "query" : {
                 "bool" : {
                     "must" : [
-                    { "match": {"packages.name": "linux"} }
+                    { "match": {"packages.name": "linux-base"} },
+                    { "prefix" : { "packages.version":  "4" } }
                     ]
                 }
             }
         }
-    }
+    },
+    "_source": ["id"]
 }
-
 ```

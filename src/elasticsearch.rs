@@ -1,13 +1,6 @@
-use failure::Error;
 use log::info;
 use std::collections::HashMap;
 use std::error::Error as StdError;
-
-#[derive(Debug, Fail)]
-enum PushError {
-    #[fail(display = "invalid status code : {}", status)]
-    InvalidStatusCode { status: i64 },
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Package {
