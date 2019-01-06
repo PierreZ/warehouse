@@ -1,41 +1,61 @@
+use crate::ScanResult;
 use log::info;
-use std::collections::HashMap;
 use std::error::Error as StdError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Package {
-    name: String,
-    version: String,
+struct ActionAndMetadata {
+    index: IndexMetadata,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct IndexMetadata {
+    #[serde(rename = "_index")]
+    index: String,
+    #[serde(rename = "_type")]
+    estype: String,
+    #[serde(rename = "_id")]
+    id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Data {
-    packages: Vec<Package>,
+fn create_bulk_body(
+    scan_results: Vec<ScanResult>,
+    settings: &crate::configuration::ESConfig,
+) -> Result<String, Box<dyn StdError>> {
+    let mut body = String::new();
+
+    for scan_result in scan_results {
+        let index = IndexMetadata {
+            index: settings.index.to_owned(),
+            estype: "packages".to_string(),
+            id: scan_result.get_id(),
+        };
+
+        let index_json = serde_json::to_string(&ActionAndMetadata { index: index })?;
+        body += &index_json;
+        body += "\n";
+        let scan_json = serde_json::to_string(&scan_result)?;
+        body += &scan_json;
+        body += "\n";
+    }
+
+    Ok(body)
 }
 
 pub fn push_scan_results(
-    hostname: String,
-    packages: HashMap<String, String>,
+    scan_results: Vec<ScanResult>,
     settings: crate::configuration::ESConfig,
-) -> Result<reqwest::StatusCode, Box<dyn StdError>> {
+) -> Result<(), Box<dyn StdError>> {
+    let body = create_bulk_body(scan_results, &settings)?;
     let client = reqwest::Client::new();
 
-    let mut vec = Vec::new();
-
-    for (name, version) in packages {
-        vec.push(Package {
-            name: name,
-            version: version,
-        });
-    }
-
-    let data = Data { packages: vec };
-
-    let url = format!("{}/{}/packages/{}", settings.url, settings.index, hostname).to_owned();
-    let res = client.post(&url).json(&data).send()?;
+    let url = format!("{}/_bulk", settings.url).to_owned();
+    let res = client
+        .post(&url)
+        .header("Content-Type", "application/json")
+        .body(body)
+        .send()?;
 
     info!("pushing to {} is {}", url, res.status());
-    Ok(res.status())
+    Ok(())
 }
 
 pub fn init_mapping(
@@ -46,23 +66,6 @@ pub fn init_mapping(
     let mapping = r#"{
     "settings": {
         "number_of_replicas": 1
-    },
-    "mappings": {
-        "packages": {
-            "properties": {
-                "packages": {
-                    "type": "nested",
-                    "properties": {
-                        "name": {
-                            "type": "text"
-                        },
-                        "text": {
-                            "type": "text"
-                        }
-                    }
-                }
-            }
-        }
     }
 }"#;
 

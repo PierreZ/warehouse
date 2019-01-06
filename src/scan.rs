@@ -1,9 +1,11 @@
+use crate::ScanResult;
 use async_ssh::Session;
 use env_logger;
 use futures::Future;
 use log::{debug, info};
 use std::collections::HashMap;
 use std::error::Error;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio_io;
 
 lazy_static! {
@@ -20,7 +22,7 @@ lazy_static! {
 pub fn scan(
     ip: String,
     settings: crate::configuration::SSHConfig,
-) -> Result<HashMap<String, String>, Box<dyn Error>> {
+) -> Result<Vec<ScanResult>, Box<dyn Error>> {
     if !SUPPORTED_PACKAGE_MANAGERS.contains_key(&settings.package_manager) {
         unimplemented!("only dpkg is supported")
     }
@@ -54,14 +56,21 @@ pub fn scan(
 
     let response = ::std::str::from_utf8(&data[..]).unwrap();
 
-    parse_package_manager_response(response, &settings.package_manager)
+    parse_package_manager_response(response, &settings.package_manager, &ip)
 }
 
 fn parse_package_manager_response(
     body: &str,
     package_manager: &str,
-) -> Result<HashMap<String, String>, Box<dyn Error>> {
-    let mut packages: HashMap<String, String> = HashMap::new();
+    ip: &str,
+) -> Result<Vec<ScanResult>, Box<dyn Error>> {
+    let mut scan_results: Vec<ScanResult> = vec![];
+
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    let in_ms = since_the_epoch.as_secs() as u128 * 1000 + since_the_epoch.subsec_millis() as u128;
 
     match package_manager {
         "dpkg" => {
@@ -69,12 +78,18 @@ fn parse_package_manager_response(
             for line in lines {
                 let words: Vec<&str> = line.split("\t").collect();
                 if words.len() == 2 {
-                    packages.insert(words[0].to_string(), words[1].to_string());
+                    scan_results.push(ScanResult {
+                        ip: ip.to_string(),
+                        package_manager: package_manager.to_string(),
+                        name: words[0].to_string(),
+                        version: words[1].to_string(),
+                        scan_at: in_ms,
+                    });
                 }
             }
         }
         &_ => unimplemented!("dpkg only"),
     };
 
-    Ok(packages)
+    Ok(scan_results)
 }

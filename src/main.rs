@@ -68,7 +68,6 @@ fn main() {
                 println!(
                     "{:?}",
                     warehouse::elasticsearch::push_scan_results(
-                        ip.clone(),
                         packages,
                         settings.elasticsearch.clone()
                     )
