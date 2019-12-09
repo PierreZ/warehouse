@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 structopt = "0.2"
-config = "0.9"
+config = "0.10"
 env_logger = "0.6"
 log = "0.4"
 async-ssh = "0.1.2"
